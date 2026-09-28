@@ -1,109 +1,234 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-const reviews = [
+type Review = {
+  id: number;
+  project: string;
+  file: string;
+  template: string;
+  severity: "Critical" | "High" | "Medium" | "Low";
+  date: string;
+  summary: string;
+};
+
+const reviews: Review[] = [
   {
     id: 1,
-    file: "auth.service.ts",
-    project: "CodeLens",
-    type: "Security",
+    project: "AI Code Review Assistant",
+    file: "src/auth/auth.service.ts",
+    template: "Security",
     severity: "High",
-    date: "September 28, 2026",
+    date: "Sep 27, 2026",
+    summary:
+      "Authentication logic should use secure password hashing and stronger credential validation.",
   },
   {
     id: 2,
-    file: "project.service.ts",
-    project: "CodeLens",
-    type: "Code Quality",
+    project: "AI Code Review Assistant",
+    file: "src/projects/project.service.ts",
+    template: "Code Quality",
     severity: "Medium",
-    date: "September 27, 2026",
+    date: "Sep 26, 2026",
+    summary:
+      "Service contains duplicated logic that could be extracted into reusable methods.",
   },
   {
     id: 3,
-    file: "database.service.ts",
-    project: "Portfolio",
-    type: "Performance",
+    project: "AI Code Review Assistant",
+    file: "src/database/database.service.ts",
+    template: "Performance",
     severity: "Low",
-    date: "September 26, 2026",
+    date: "Sep 25, 2026",
+    summary:
+      "Database queries could be optimized by reducing unnecessary repeated requests.",
+  },
+  {
+    id: 4,
+    project: "Portfolio Backend",
+    file: "src/contact/contact.controller.ts",
+    template: "Security",
+    severity: "Critical",
+    date: "Sep 24, 2026",
+    summary:
+      "User input should be validated and sanitized before being processed.",
   },
 ];
 
 export default function ReviewsPage() {
   const [search, setSearch] = useState("");
+  const [template, setTemplate] = useState("All");
+  const [severity, setSeverity] = useState("All");
 
-  const filteredReviews = reviews.filter((review) =>
-    `${review.file} ${review.project} ${review.type}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
+  const filteredReviews = useMemo(() => {
+    return reviews.filter((review) => {
+      const matchesSearch =
+        review.project.toLowerCase().includes(search.toLowerCase()) ||
+        review.file.toLowerCase().includes(search.toLowerCase()) ||
+        review.summary.toLowerCase().includes(search.toLowerCase());
+
+      const matchesTemplate =
+        template === "All" || review.template === template;
+
+      const matchesSeverity =
+        severity === "All" || review.severity === severity;
+
+      return matchesSearch && matchesTemplate && matchesSeverity;
+    });
+  }, [search, template, severity]);
 
   return (
-    <main className="min-h-screen bg-slate-950 p-8 text-white">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8">
+    <main className="min-h-screen bg-slate-950 text-white">
+      {/* Header */}
+      <header className="border-b border-slate-800 px-8 py-6">
+        <div>
           <h1 className="text-3xl font-bold">Review History</h1>
 
-          <p className="mt-2 text-sm text-slate-500">
-            Search and review previous AI code analysis results.
+          <p className="mt-2 text-sm text-slate-400">
+            View and search previous AI code reviews.
+          </p>
+        </div>
+      </header>
+
+      <section className="p-8">
+        {/* Filters */}
+        <div className="mb-6 rounded-xl border border-slate-800 bg-slate-900/50 p-5">
+          <div className="grid gap-4 md:grid-cols-3">
+            {/* Search */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-300">
+                Search
+              </label>
+
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search project, file or issue..."
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Template */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-300">
+                Review Template
+              </label>
+
+              <select
+                value={template}
+                onChange={(e) => setTemplate(e.target.value)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+              >
+                <option>All</option>
+                <option>Security</option>
+                <option>Performance</option>
+                <option>Code Quality</option>
+              </select>
+            </div>
+
+            {/* Severity */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-300">
+                Severity
+              </label>
+
+              <select
+                value={severity}
+                onChange={(e) => setSeverity(e.target.value)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+              >
+                <option>All</option>
+                <option>Critical</option>
+                <option>High</option>
+                <option>Medium</option>
+                <option>Low</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Result count */}
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-sm text-slate-400">
+            {filteredReviews.length} review
+            {filteredReviews.length !== 1 ? "s" : ""} found
           </p>
         </div>
 
-        <div className="mb-6">
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search reviews..."
-            className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500"
-          />
-        </div>
+        {/* Reviews */}
+        <div className="space-y-4">
+          {filteredReviews.length > 0 ? (
+            filteredReviews.map((review) => (
+              <div
+                key={review.id}
+                className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 transition hover:border-slate-700"
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="font-semibold text-white">
+                        {review.file}
+                      </h2>
 
-        <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
-          <div className="grid grid-cols-5 border-b border-slate-800 px-5 py-4 text-xs font-medium uppercase tracking-wide text-slate-500">
-            <span>File</span>
-            <span>Project</span>
-            <span>Template</span>
-            <span>Severity</span>
-            <span>Date</span>
-          </div>
+                      <SeverityBadge severity={review.severity} />
+                    </div>
 
-          {filteredReviews.map((review) => (
-            <button
-              key={review.id}
-              type="button"
-              className="grid w-full grid-cols-5 border-b border-slate-800 px-5 py-5 text-left text-sm transition last:border-b-0 hover:bg-slate-800/40"
-            >
-              <span className="font-medium text-white">{review.file}</span>
+                    <p className="mt-2 text-sm text-slate-400">
+                      {review.project}
+                    </p>
 
-              <span className="text-slate-400">{review.project}</span>
+                    <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
+                      {review.summary}
+                    </p>
 
-              <span className="text-slate-400">{review.type}</span>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <span className="rounded-md bg-slate-800 px-3 py-1 text-xs text-slate-300">
+                        {review.template}
+                      </span>
 
-              <span>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs ${
-                    review.severity === "High"
-                      ? "bg-red-500/10 text-red-400"
-                      : review.severity === "Medium"
-                        ? "bg-yellow-500/10 text-yellow-400"
-                        : "bg-green-500/10 text-green-400"
-                  }`}
-                >
-                  {review.severity}
-                </span>
-              </span>
+                      <span className="rounded-md bg-slate-800 px-3 py-1 text-xs text-slate-400">
+                        {review.date}
+                      </span>
+                    </div>
+                  </div>
 
-              <span className="text-slate-500">{review.date}</span>
-            </button>
-          ))}
+                  <button className="shrink-0 rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white">
+                    View Details
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-800 bg-slate-900/30 p-12 text-center">
+              <div className="text-4xl">🔍</div>
 
-          {filteredReviews.length === 0 && (
-            <div className="p-10 text-center text-sm text-slate-500">
-              No reviews found.
+              <h2 className="mt-4 font-semibold">No reviews found</h2>
+
+              <p className="mt-2 text-sm text-slate-500">
+                Try changing your search or filters.
+              </p>
             </div>
           )}
         </div>
-      </div>
+      </section>
     </main>
+  );
+}
+
+function SeverityBadge({ severity }: { severity: Review["severity"] }) {
+  const styles = {
+    Critical: "bg-red-500/10 text-red-400 border-red-500/20",
+    High: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+    Medium: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+    Low: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  };
+
+  return (
+    <span
+      className={`rounded-full border px-2.5 py-1 text-xs font-medium ${styles[severity]}`}
+    >
+      {severity}
+    </span>
   );
 }

@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: codelens-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: codelens
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - codelens_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  codelens_postgres_data:
